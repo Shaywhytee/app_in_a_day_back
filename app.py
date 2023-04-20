@@ -29,6 +29,7 @@ class AccountSchema(ma.Schema):
     class Meta:
         fields = ('id', 'user_email', 'user_password')
 account_schema = AccountSchema() 
+
 #***** Account Endpoints *****
     #Create
 
@@ -50,7 +51,7 @@ def account_create():
         new_account = Account_info(user_email, user_password)
         db.session.add(new_account)
         db.session.commit()
-        return jsonify({'success': 'Account created successfully'})
+        return jsonify({'success': 'Account created successfully'}), 200
     except exc.IntegrityError:
         db.session.rollback()
         return jsonify({'Error': 'Email already exists.'}), 400
@@ -64,21 +65,23 @@ def login():
     if request.content_type != 'application/json':
         return jsonify({"error": "Invalid content type: must be 'application/json'"}), 400
     
-    email = request.json.get("user_email")
-    password = request.json.get("user_password")
+    post_data = request.get_json()
+    email = post_data.get("user_email")
+    password = post_data.get("user_password")
+    account = db.session.query(Account_info).filter(Account_info.user_email == email, Account_info.user_password == password).first()
 
     if not email or not password:
         return jsonify({"error": "Invalid email or password"}), 401
 
-    account = db.session.query(Account_info).filter(Account_info.user_email == email, Account_info.user_password == password).first()
 
     if account is None:
         return jsonify({'error': 'Invalid email or password'}), 401
     else:
-        return jsonify({"success": "Account log in successful"}, account_schema.dump(account.id))
+        return jsonify({
+            "success": "Account log in successful",
+            "account_id": account.id
+        })
 
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
