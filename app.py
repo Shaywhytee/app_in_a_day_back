@@ -20,33 +20,15 @@ class Account_info(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_email = db.Column(db.String, nullable=False, unique=True)
     user_password = db.Column(db.String, nullable=False)
-    user_items = db.relationship('User_list_item', backref='account', lazy=True)
 
     def __init__(self, user_email, user_password):
         self.user_email = user_email
         self.user_password = user_password
 
-class User_list_item(db.model):
-    id = db.Column(db.Integer, praimary_key=True)
-    type = db.Column(db.String, nullable=False)
-    proof = db.Column(db.Integer, nullable=False)
-    account_id = db.Column(db.Integer, db.ForeignKey('account_info.id'), nullable=False)
-
-    def __init__(self, type, proof, account_id)
-        self.type = type
-        self.proof = proof
-        self.account_id = account_id
-
 class AccountSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'user_email', 'user_password', 'user_items')
+        fields = ('id', 'user_email', 'user_password')
 account_schema = AccountSchema() 
-
-class UserListItemSchema(ma.Schema):
-    class Meta:
-        field = ('id', 'user_email', 'user_password', 'user_items')
-user_list_item_schema = UserListItemSchema()
-user_list_item_schema = UserListItemSchema(many=True)
 
 #***** Account Endpoints *****
     #Create
@@ -69,7 +51,7 @@ def account_create():
         new_account = Account_info(user_email, user_password)
         db.session.add(new_account)
         db.session.commit()
-        return jsonify({'success': 'Account created successfully'})
+        return jsonify({'success': 'Account created successfully'}), 200
     except exc.IntegrityError:
         db.session.rollback()
         return jsonify({'Error': 'Email already exists.'}), 400
@@ -86,29 +68,20 @@ def login():
     post_data = request.get_json()
     email = post_data.get("user_email")
     password = post_data.get("user_password")
+    account = db.session.query(Account_info).filter(Account_info.user_email == email, Account_info.user_password == password).first()
 
     if not email or not password:
         return jsonify({"error": "Invalid email or password"}), 401
 
-    account = db.session.query(Account_info).filter(Account_info.user_email == email, Account_info.user_password == password).first()
 
     if account is None:
         return jsonify({'error': 'Invalid email or password'}), 401
     else:
-        return jsonify({"success": "Account log in successful"}, account_schema.dump(account.id))
+        return jsonify({
+            "success": "Account log in successful",
+            "account_id": account.id
+        })
 
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-#***** User item endpoints *****
-    #create
-@app.route('/create/item', methods=["POST"])
-def createItem():
-    if request.content_type != 'application/json':
-        return jsonify({"error": "Invalid content type: must be 'application/json'"}), 400
-    
-    post_data=
-    #delete
-    #edit
