@@ -25,7 +25,10 @@ class Account_info(db.Model):
         self.user_email = user_email
         self.user_password = user_password
 
-    
+class AccountSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'user_email', 'user_password')
+account_schema = AccountSchema() 
 #***** Account Endpoints *****
     #Create
 
@@ -59,15 +62,20 @@ def account_create():
 @app.route('/login', methods=["POST"])
 def login():
     if request.content_type != 'application/json':
-        return jsonify({"Error: JSONIFY"}), 400
+        return jsonify({"error": "Invalid content type: must be 'application/json'"}), 400
+    
     email = request.json.get("user_email")
     password = request.json.get("user_password")
-    account = db.session.query(Account_info).filter(Account_info.user_email == email).first()
+
+    if not email or not password:
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    account = db.session.query(Account_info).filter(Account_info.user_email == email, Account_info.user_password == password).first()
+
     if account is None:
-        return jsonify({'error': 'Invalid email'}), 401
-    if not account.check_password(password):
-         return jsonify({'error': 'Invalid password'}), 401
-    return jsonify({'id': account.id}, 'login successful'), 200
+        return jsonify({'error': 'Invalid email or password'}), 401
+    else:
+        return jsonify({"success": "Account log in successful"}, account_schema.dump(account.id))
 
 
 if __name__ == '__main__':
