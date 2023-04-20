@@ -20,15 +20,34 @@ class Account_info(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_email = db.Column(db.String, nullable=False, unique=True)
     user_password = db.Column(db.String, nullable=False)
+    user_items = db.relationship('User_list_item', backref='account', lazy=True)
 
     def __init__(self, user_email, user_password):
         self.user_email = user_email
         self.user_password = user_password
 
+class User_list_item(db.model):
+    id = db.Column(db.Integer, praimary_key=True)
+    type = db.Column(db.String, nullable=False)
+    proof = db.Column(db.Integer, nullable=False)
+    account_id = db.Column(db.Integer, db.ForeignKey('account_info.id'), nullable=False)
+
+    def __init__(self, type, proof, account_id)
+        self.type = type
+        self.proof = proof
+        self.account_id = account_id
+
 class AccountSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'user_email', 'user_password')
+        fields = ('id', 'user_email', 'user_password', 'user_items')
 account_schema = AccountSchema() 
+
+class UserListItemSchema(ma.Schema):
+    class Meta:
+        field = ('id', 'user_email', 'user_password', 'user_items')
+user_list_item_schema = UserListItemSchema()
+user_list_item_schema = UserListItemSchema(many=True)
+
 #***** Account Endpoints *****
     #Create
 
@@ -64,8 +83,9 @@ def login():
     if request.content_type != 'application/json':
         return jsonify({"error": "Invalid content type: must be 'application/json'"}), 400
     
-    email = request.json.get("user_email")
-    password = request.json.get("user_password")
+    post_data = request.get_json()
+    email = post_data.get("user_email")
+    password = post_data.get("user_password")
 
     if not email or not password:
         return jsonify({"error": "Invalid email or password"}), 401
@@ -82,3 +102,13 @@ if __name__ == '__main__':
     app.run(debug=True)
 
 
+#***** User item endpoints *****
+    #create
+@app.route('/create/item', methods=["POST"])
+def createItem():
+    if request.content_type != 'application/json':
+        return jsonify({"error": "Invalid content type: must be 'application/json'"}), 400
+    
+    post_data=
+    #delete
+    #edit
